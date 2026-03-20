@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36429.23 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TuneFlow.UI", "TuneFlow.UI.csproj", "{3269690F-5345-4040-B2AB-65E3DEDF328B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TuneFlow.Logic", "..\TuneFlow.Logic\TuneFlow.Logic.csproj", "{815BBF55-50D1-456C-B5CC-6BA00D478783}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3269690F-5345-4040-B2AB-65E3DEDF328B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3269690F-5345-4040-B2AB-65E3DEDF328B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3269690F-5345-4040-B2AB-65E3DEDF328B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3269690F-5345-4040-B2AB-65E3DEDF328B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{815BBF55-50D1-456C-B5CC-6BA00D478783}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{815BBF55-50D1-456C-B5CC-6BA00D478783}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{815BBF55-50D1-456C-B5CC-6BA00D478783}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{815BBF55-50D1-456C-B5CC-6BA00D478783}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8437ED33-6F16-41B1-B816-9ACE36DEA188}
+	EndGlobalSection
+EndGlobal
