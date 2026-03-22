@@ -51,7 +51,7 @@
 
 1. **Клонируйте репозиторий:**
    ```bash
-   git clone https://github.com/ВАШ_ЛОГИН/TuneFlow.git
+   git clone https://github.com/nevollwar/TuneFlow.git
    ```
 2. **Откройте проект:**
    Запустите файл `TuneFlow.sln` в **Visual Studio 2022**.
