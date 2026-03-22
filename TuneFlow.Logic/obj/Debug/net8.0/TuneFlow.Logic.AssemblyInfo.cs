@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TuneFlow.Logic")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cc8382a35afdb084df9e9064ab93215d9d352d2e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2daf5bc2732331682df1d552a86be391e57fdf35")]
 [assembly: System.Reflection.AssemblyProductAttribute("TuneFlow.Logic")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TuneFlow.Logic")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
