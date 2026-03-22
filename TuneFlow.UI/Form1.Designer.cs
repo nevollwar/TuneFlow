@@ -66,7 +66,6 @@
             btnMinimize.TabIndex = 3;
             btnMinimize.Text = "—";
             btnMinimize.UseVisualStyleBackColor = true;
-            btnMinimize.Click += btnMinimize_Click;
             // 
             // btnMaximize
             // 
@@ -81,7 +80,6 @@
             btnMaximize.TabIndex = 2;
             btnMaximize.Text = "▢";
             btnMaximize.UseVisualStyleBackColor = true;
-            btnMaximize.Click += btnMaximize_Click;
             // 
             // btnClose
             // 
@@ -95,7 +93,6 @@
             btnClose.TabIndex = 1;
             btnClose.Text = "✕";
             btnClose.UseVisualStyleBackColor = true;
-            btnClose.Click += btnClose_Click;
             // 
             // lblLogo
             // 
