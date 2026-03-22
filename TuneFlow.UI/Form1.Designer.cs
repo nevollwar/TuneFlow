@@ -33,7 +33,6 @@
             btnMaximize = new Button();
             btnClose = new Button();
             lblLogo = new Label();
-            pnlPlayer = new Panel();
             pnlSidebar = new Panel();
             dgvTracks = new DataGridView();
             pnlHeader.SuspendLayout();
@@ -105,22 +104,13 @@
             lblLogo.TabIndex = 0;
             lblLogo.Text = "TuneFlow";
             // 
-            // pnlPlayer
-            // 
-            pnlPlayer.BackColor = Color.FromArgb(24, 24, 24);
-            pnlPlayer.Dock = DockStyle.Bottom;
-            pnlPlayer.Location = new Point(0, 573);
-            pnlPlayer.Name = "pnlPlayer";
-            pnlPlayer.Size = new Size(1082, 80);
-            pnlPlayer.TabIndex = 1;
-            // 
             // pnlSidebar
             // 
             pnlSidebar.BackColor = Color.Black;
             pnlSidebar.Dock = DockStyle.Left;
             pnlSidebar.Location = new Point(0, 40);
             pnlSidebar.Name = "pnlSidebar";
-            pnlSidebar.Size = new Size(200, 533);
+            pnlSidebar.Size = new Size(200, 613);
             pnlSidebar.TabIndex = 2;
             // 
             // dgvTracks
@@ -132,7 +122,7 @@
             dgvTracks.Location = new Point(200, 40);
             dgvTracks.Name = "dgvTracks";
             dgvTracks.RowHeadersWidth = 51;
-            dgvTracks.Size = new Size(882, 533);
+            dgvTracks.Size = new Size(882, 613);
             dgvTracks.TabIndex = 3;
             // 
             // Form1
@@ -143,7 +133,6 @@
             ClientSize = new Size(1082, 653);
             Controls.Add(dgvTracks);
             Controls.Add(pnlSidebar);
-            Controls.Add(pnlPlayer);
             Controls.Add(pnlHeader);
             FormBorderStyle = FormBorderStyle.None;
             Name = "Form1";
@@ -159,7 +148,6 @@
 
         private Panel pnlHeader;
         private Label lblLogo;
-        private Panel pnlPlayer;
         private Panel pnlSidebar;
         private DataGridView dgvTracks;
         private Button btnClose;

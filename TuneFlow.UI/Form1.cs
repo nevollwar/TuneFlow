@@ -129,9 +129,6 @@ namespace TuneFlow.UI
             // Боковая панель навигации — чисто чёрная для контраста
             if (pnlSidebar != null) pnlSidebar.BackColor = Color.Black;
 
-            // Нижняя панель плеера — чуть светлее основного фона
-            if (pnlPlayer != null) pnlPlayer.BackColor = Color.FromArgb(24, 24, 24);
-
             // Логотип — фирменный зелёный цвет Spotify, жирный шрифт
             if (lblLogo != null)
             {

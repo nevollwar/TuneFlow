@@ -6,7 +6,12 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>Gemini_Generated_Image_w6r6qqw6r6qqw6r6.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Gemini_Generated_Image_w6r6qqw6r6qqw6r6.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\TuneFlow.Logic\TuneFlow.Logic.csproj" />

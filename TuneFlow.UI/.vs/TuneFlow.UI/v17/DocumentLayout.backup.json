@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "C:\\\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\Visual Studio 2022\\Projects\\TuneFlow_CourseWork\\TuneFlow.UI\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{3269690F-5345-4040-B2AB-65E3DEDF328B}|TuneFlow.UI.csproj|c:\\\u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\\u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\visual studio 2022\\projects\\tuneflow_coursework\\tuneflow.ui\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{3269690F-5345-4040-B2AB-65E3DEDF328B}|TuneFlow.UI.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{3269690F-5345-4040-B2AB-65E3DEDF328B}|TuneFlow.UI.csproj|c:\\\u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\\u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\visual studio 2022\\projects\\tuneflow_coursework\\tuneflow.ui\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{3269690F-5345-4040-B2AB-65E3DEDF328B}|TuneFlow.UI.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
@@ -23,14 +27,26 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "Form1.cs [\u041A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0442\u043E\u0440]",
+              "DocumentMoniker": "C:\\\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\Visual Studio 2022\\Projects\\TuneFlow_CourseWork\\TuneFlow.UI\\Form1.cs",
+              "RelativeDocumentMoniker": "Form1.cs",
+              "ToolTip": "C:\\\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\Visual Studio 2022\\Projects\\TuneFlow_CourseWork\\TuneFlow.UI\\Form1.cs [\u041A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0442\u043E\u0440]",
+              "RelativeToolTip": "Form1.cs [\u041A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0442\u043E\u0440]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-22T18:24:56.079Z",
+              "EditorCaption": " [\u041A\u043E\u043D\u0441\u0442\u0440\u0443\u043A\u0442\u043E\u0440]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
               "Title": "Form1.cs",
               "DocumentMoniker": "C:\\\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\Visual Studio 2022\\Projects\\TuneFlow_CourseWork\\TuneFlow.UI\\Form1.cs",
               "RelativeDocumentMoniker": "Form1.cs",
               "ToolTip": "C:\\\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B\\Visual Studio 2022\\Projects\\TuneFlow_CourseWork\\TuneFlow.UI\\Form1.cs",
               "RelativeToolTip": "Form1.cs",
-              "ViewState": "AgIAAFoAAAAAAAAAAAAuwHEAAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAAKIAAAAAAAAAAAAYwLsAAABjAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-22T17:28:25.067Z",
+              "WhenOpened": "2026-03-22T18:22:14.154Z",
               "EditorCaption": ""
             }
           ]
