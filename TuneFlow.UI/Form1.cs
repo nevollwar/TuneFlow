@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using TuneFlow.Logic;
@@ -7,32 +9,26 @@ using TuneFlow.Logic;
 namespace TuneFlow.UI
 {
     /// <summary>
-    /// Главная форма приложения. Предоставляет пользовательский интерфейс 
-    /// для взаимодействия с рекомендательной музыкальной системой.
-    /// Выполнена в современном безрамочном стиле (Dark Theme).
+    /// Главный контроллер интерфейса музыкальной системы TuneFlow.
+    /// Реализует логику ViewState (состояния экрана) и визуализацию метаданных.
     /// </summary>
     public partial class Form1 : Form
     {
-        #region Поля класса
+        #region Поля и объекты бизнес-логики
 
-        /// <summary>Экземпляр репозитория для работы с коллекцией музыкальных треков.</summary>
         private TrackRepository _repo;
+        private List<Track> _favorites = new List<Track>();
+        private List<Track> _currentViewList = new List<Track>();
+        private bool _isPlaylistView = false;
 
-        /// <summary>Текстовое поле для осуществления динамического поиска.</summary>
         private TextBox txtSearch;
-
-        /// <summary>Кастомный элемент управления полосой прокрутки.</summary>
         private CustomScrollbar _customScrollbar;
-
-        /// <summary>Флаг, определяющий направление текущей сортировки (по возрастанию/убыванию).</summary>
         private bool _sortAscending = true;
-
-        /// <summary>Название колонки, по которой в данный момент отсортирована таблица.</summary>
-        private string _currentSortColumn = "";
+        private string _currentSortColumn = "Id";
 
         #endregion
 
-        #region Импорт функций Windows API
+        #region Импорт функций Windows API (P/Invoke)
 
         [DllImport("user32.DLL", EntryPoint = "ReleaseCapture")]
         private extern static void ReleaseCapture();
@@ -45,22 +41,20 @@ namespace TuneFlow.UI
 
         #endregion
 
-        /// <summary>
-        /// Инициализирует новый экземпляр класса <see cref="Form1"/>.
-        /// </summary>
         public Form1()
         {
             InitializeComponent();
             _repo = new TrackRepository();
 
+            // Базовая конфигурация окна
             this.FormBorderStyle = FormBorderStyle.None;
             this.StartPosition = FormStartPosition.CenterScreen;
             this.DoubleBuffered = true;
             this.MaximizedBounds = Screen.FromHandle(this.Handle).WorkingArea;
 
+            // Активация Dark Mode для системных компонентов
             int isDarkMode = 1;
             DwmSetWindowAttribute(this.Handle, 20, ref isDarkMode, sizeof(int));
-            DwmSetWindowAttribute(this.Handle, 19, ref isDarkMode, sizeof(int));
 
             ApplyTheme();
             CreateDynamicUI();
@@ -68,7 +62,7 @@ namespace TuneFlow.UI
         }
 
         /// <summary>
-        /// Применяет заданную цветовую схему ко всем элементам управления формы.
+        /// Применяет визуальные стили (Spotify Dark Theme).
         /// </summary>
         private void ApplyTheme()
         {
@@ -102,7 +96,7 @@ namespace TuneFlow.UI
                 dgvTracks.GridColor = Color.FromArgb(35, 35, 35);
                 dgvTracks.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
                 dgvTracks.DefaultCellStyle.BackColor = darkBg;
-                dgvTracks.DefaultCellStyle.ForeColor = Color.FromArgb(240, 240, 240);
+                dgvTracks.DefaultCellStyle.ForeColor = Color.FromArgb(220, 220, 220);
                 dgvTracks.DefaultCellStyle.SelectionBackColor = Color.FromArgb(45, 45, 45);
                 dgvTracks.DefaultCellStyle.Font = new Font("Segoe UI", 9);
                 dgvTracks.RowTemplate.Height = 40;
@@ -112,11 +106,14 @@ namespace TuneFlow.UI
                 dgvTracks.ColumnHeadersDefaultCellStyle.BackColor = darkBg;
                 dgvTracks.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
                 dgvTracks.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-                dgvTracks.ColumnHeadersDefaultCellStyle.SelectionBackColor = darkBg;
                 dgvTracks.ColumnHeadersHeight = 45;
-                dgvTracks.Cursor = Cursors.Hand;
 
                 dgvTracks.MouseEnter += (s, e) => dgvTracks.Focus();
+
+                // Обработка правого клика мыши
+                dgvTracks.MouseDown += (s, e) => {
+                    if (e.Button == MouseButtons.Right) CreateDynamicContextMenu(e.Location);
+                };
             }
 
             StyleWindowBtn(btnClose, "✕");
@@ -124,326 +121,241 @@ namespace TuneFlow.UI
             StyleWindowBtn(btnMinimize, "—");
         }
 
-        private void StyleWindowBtn(Button btn, string text)
+        /// <summary>
+        /// Контекстное меню, меняющееся в зависимости от текущего экрана (Главная/Плейлист).
+        /// </summary>
+        private void CreateDynamicContextMenu(Point location)
         {
-            if (btn == null) return;
-            btn.Text = text;
-            btn.FlatStyle = FlatStyle.Flat;
-            btn.FlatAppearance.BorderSize = 0;
-            btn.FlatAppearance.MouseOverBackColor = Color.Transparent;
-            btn.ForeColor = Color.White;
-            btn.Font = new Font("Segoe UI", 10f);
-            btn.Cursor = Cursors.Hand;
+            var hit = dgvTracks.HitTest(location.X, location.Y);
+            if (hit.RowIndex < 0) return;
+
+            dgvTracks.ClearSelection();
+            dgvTracks.Rows[hit.RowIndex].Selected = true;
+
+            ContextMenuStrip menu = new ContextMenuStrip { BackColor = Color.FromArgb(40, 40, 40), ForeColor = Color.White, ShowImageMargin = false };
+            Track selected = (Track)dgvTracks.Rows[hit.RowIndex].DataBoundItem;
+
+            // Логика пунктов меню
+            if (_isPlaylistView)
+            {
+                var remove = menu.Items.Add("Удалить из плейлиста");
+                remove.Click += (s, e) => { _favorites.Remove(selected); LoadData(_favorites); };
+            }
+            else
+            {
+                var add = menu.Items.Add("Добавить в избранное");
+                add.Click += (s, e) => { if (!_favorites.Contains(selected)) { _favorites.Add(selected); dgvTracks.Invalidate(); } };
+            }
+
+            // Рекомендации доступны всегда
+            var rec = menu.Items.Add("Показать похожие треки");
+            rec.Click += (s, e) => {
+                _isPlaylistView = false;
+                txtSearch.Text = $" Похожее на: {selected.Title}";
+                LoadData(_repo.GetRecommendations(selected));
+            };
+
+            menu.Show(dgvTracks, location);
         }
 
-        /// <summary>
-        /// Динамически генерирует строку поиска, лейбл и меню навигации.
-        /// </summary>
         private void CreateDynamicUI()
         {
             if (pnlHeader != null)
             {
-                // Определение параметров геометрии для центрирования поискового блока
-                int searchBoxWidth = 400;
-                int searchBoxX = (pnlHeader.Width - searchBoxWidth) / 2;
+                int sw = 420;
+                int sx = (pnlHeader.Width - sw) / 2;
 
-                // 1. Инициализация пояснительной надписи для поля поиска
-                Label lblSearch = new Label
-                {
-                    Text = "Поиск:",
-                    ForeColor = Color.Gray,
-                    Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                    AutoSize = true,
-                    Anchor = AnchorStyles.Top,
-                    Location = new Point(searchBoxX - 70, 10)
-                };
+                Label lblSearch = new Label { Text = "Поиск:", ForeColor = Color.Gray, Font = new Font("Segoe UI", 10, FontStyle.Bold), AutoSize = true, Anchor = AnchorStyles.Top, Location = new Point(sx - 70, 10) };
                 pnlHeader.Controls.Add(lblSearch);
 
-                // 2. Инициализация и настройка текстового поля ввода поискового запроса
-                txtSearch = new TextBox
-                {
-                    BackColor = Color.FromArgb(40, 40, 40),
-                    ForeColor = Color.White,
-                    Font = new Font("Segoe UI", 10),
-                    BorderStyle = BorderStyle.FixedSingle,
-                    Width = searchBoxWidth,
-                    Location = new Point(searchBoxX, 8),
-                    Anchor = AnchorStyles.Top,
-                    Text = " Введите название трека, имя артиста или жанр..."
-                };
+                txtSearch = new TextBox { BackColor = Color.FromArgb(40, 40, 40), ForeColor = Color.White, Font = new Font("Segoe UI", 10), BorderStyle = BorderStyle.FixedSingle, Width = sw, Location = new Point(sx, 8), Anchor = AnchorStyles.Top, Text = " Поиск трека, артиста или жанра..." };
+                txtSearch.Enter += (s, e) => { if (txtSearch.Text.Contains("Поиск")) txtSearch.Text = ""; };
+                txtSearch.Leave += (s, e) => { if (string.IsNullOrWhiteSpace(txtSearch.Text)) txtSearch.Text = " Поиск трека, артиста или жанра..."; };
 
-                // Реализация логики интерактивного текстового заполнителя (Placeholder)
-                txtSearch.Enter += (s, e) => { if (txtSearch.Text == " Введите название трека, имя артиста или жанр...") txtSearch.Text = ""; };
-                txtSearch.Leave += (s, e) => { if (string.IsNullOrWhiteSpace(txtSearch.Text)) txtSearch.Text = " Введите название трека, имя артиста или жанр..."; };
-
-                // Подписка на событие изменения текста для реализации "живого" поиска
                 txtSearch.TextChanged += (s, e) => {
-                    if (txtSearch.Text != " Введите название трека, имя артиста или жанр...")
+                    if (!txtSearch.Text.Contains("Поиск"))
                     {
-                        LoadData(_repo.Search(txtSearch.Text));
-                        _customScrollbar?.UpdateScroll();
+                        string q = txtSearch.Text.ToLower();
+                        List<Track> baseList = _isPlaylistView ? _favorites : _repo.GetAll();
+                        var filtered = baseList.Where(t => t.Title.ToLower().Contains(q) || t.Artist.ToLower().Contains(q) || t.Genre.ToLower().Contains(q)).ToList();
+                        LoadData(filtered, false);
                     }
                 };
                 pnlHeader.Controls.Add(txtSearch);
             }
 
-            // Инициализация навигационного меню в боковой панели
             if (pnlSidebar != null)
             {
-                /* 
-                 * Кнопка "Главная":
-                 * Выполняет полный сброс состояния фильтрации и сортировки приложения.
-                 * Устанавливает исходный порядок отображения записей (по возрастанию индекса Id).
-                 */
                 CreateSidebarButton("Главная", 20, () => {
-                    // Очистка параметров поиска
-                    txtSearch.Text = " Введите название трека, имя артиста или жанр...";
-
-                    // Сброс параметров сортировки к исходному состоянию (по идентификатору Id)
-                    _currentSortColumn = "Id";
-                    _sortAscending = true;
-
-                    // Обновление представления данных из репозитория
-                    LoadData(_repo.Sort("Id", true));
-                    _customScrollbar?.UpdateScroll();
+                    _isPlaylistView = false;
+                    txtSearch.Text = " Поиск трека, артиста или жанра...";
+                    LoadData(_repo.GetAll());
                 });
 
-                // Кнопка "О приложении": вызов информационного диалогового окна
-                CreateSidebarButton("О приложении", 65, ShowAboutDialog);
+                CreateSidebarButton("Мой плейлист", 65, () => {
+                    _isPlaylistView = true;
+                    txtSearch.Text = " Поиск по вашему плейлисту...";
+                    LoadData(_favorites);
+                });
+
+                CreateSidebarButton("Помощь", pnlSidebar.Height - 110, ShowHelpDialog, true);
+                CreateSidebarButton("О приложении", pnlSidebar.Height - 65, ShowAboutDialog, true);
             }
 
-            // Инстанцирование и интеграция кастомного компонента полосы прокрутки
             if (dgvTracks != null)
             {
-                _customScrollbar = new CustomScrollbar();
-                _customScrollbar.Dock = DockStyle.Right;
-
-                // Добавление в иерархию элементов управления родительского контейнера таблицы
+                _customScrollbar = new CustomScrollbar { Dock = DockStyle.Right, Grid = dgvTracks };
                 dgvTracks.Parent.Controls.Add(_customScrollbar);
                 _customScrollbar.BringToFront();
-
-                // Ассоциация с целевым объектом DataGridView
-                _customScrollbar.Grid = dgvTracks;
             }
-        }
-
-        private void CreateSidebarButton(string text, int yPos, Action onClick)
-        {
-            Button btn = new Button
-            {
-                Text = "   " + text,
-                ForeColor = Color.Gray,
-                BackColor = Color.Black,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleLeft,
-                Width = pnlSidebar.Width,
-                Height = 45,
-                Location = new Point(0, yPos),
-                Cursor = Cursors.Hand
-            };
-            btn.FlatAppearance.BorderSize = 0;
-            btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(30, 30, 30);
-
-            btn.MouseEnter += (s, e) => btn.ForeColor = Color.White;
-            btn.MouseLeave += (s, e) => btn.ForeColor = Color.Gray;
-            btn.Click += (s, e) => onClick();
-
-            pnlSidebar.Controls.Add(btn);
-        }
-
-        private void ShowAboutDialog()
-        {
-            Form aboutForm = new Form
-            {
-                Size = new Size(400, 200),
-                StartPosition = FormStartPosition.CenterParent,
-                FormBorderStyle = FormBorderStyle.None,
-                BackColor = Color.FromArgb(30, 30, 30),
-            };
-
-            Label text = new Label
-            {
-                Text = "TUNEFLOW\nРекомендательная система музыкальных треков.\n\nРазработано в рамках курсового проекта.\nВерсия 1.0.0",
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 10),
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter
-            };
-
-            Button btnOk = new Button
-            {
-                Text = "ЗАКРЫТЬ",
-                Dock = DockStyle.Bottom,
-                Height = 40,
-                FlatStyle = FlatStyle.Flat,
-                ForeColor = Color.FromArgb(30, 215, 96),
-                BackColor = Color.FromArgb(20, 20, 20),
-                Cursor = Cursors.Hand
-            };
-            btnOk.FlatAppearance.BorderSize = 0;
-            btnOk.Click += (s, e) => aboutForm.Close();
-
-            aboutForm.Controls.Add(text);
-            aboutForm.Controls.Add(btnOk);
-            aboutForm.ShowDialog();
         }
 
         private void BindControls()
         {
-            if (btnClose != null)
-            {
-                btnClose.Click += (s, e) => Application.Exit();
-                btnClose.MouseEnter += (s, e) => btnClose.BackColor = Color.FromArgb(232, 17, 35);
-                btnClose.MouseLeave += (s, e) => btnClose.BackColor = Color.Transparent;
-                btnClose.FlatAppearance.MouseDownBackColor = Color.FromArgb(180, 0, 0);
-            }
-            if (btnMinimize != null)
-            {
-                btnMinimize.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
-                btnMinimize.MouseEnter += (s, e) => btnMinimize.BackColor = Color.FromArgb(40, 40, 40);
-                btnMinimize.MouseLeave += (s, e) => btnMinimize.BackColor = Color.Transparent;
-            }
-            if (btnMaximize != null)
-            {
-                btnMaximize.Click += (s, e) => {
-                    this.WindowState = this.WindowState == FormWindowState.Maximized ? FormWindowState.Normal : FormWindowState.Maximized;
-                    btnMaximize.Text = this.WindowState == FormWindowState.Maximized ? "❐" : "▢";
-                };
-                btnMaximize.MouseEnter += (s, e) => btnMaximize.BackColor = Color.FromArgb(40, 40, 40);
-                btnMaximize.MouseLeave += (s, e) => btnMaximize.BackColor = Color.Transparent;
-            }
+            // Настройка анимации кнопок управления окном
+            btnClose.Click += (s, e) => Application.Exit();
+            btnClose.MouseEnter += (s, e) => btnClose.BackColor = Color.FromArgb(232, 17, 35);
+            btnClose.MouseLeave += (s, e) => btnClose.BackColor = Color.Transparent;
 
-            if (pnlHeader != null)
-            {
-                pnlHeader.MouseDown += (s, e) => {
-                    ReleaseCapture();
-                    SendMessage(this.Handle, 0x112, 0xf012, 0);
-                };
-            }
+            btnMinimize.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
+            btnMinimize.MouseEnter += (s, e) => btnMinimize.BackColor = Color.FromArgb(60, 60, 60);
+            btnMinimize.MouseLeave += (s, e) => btnMinimize.BackColor = Color.Transparent;
 
-            this.Load += (s, e) => {
-                LoadData(_repo.GetAll());
-                _customScrollbar?.UpdateScroll();
-            };
+            btnMaximize.Click += (s, e) => this.WindowState = this.WindowState == FormWindowState.Maximized ? FormWindowState.Normal : FormWindowState.Maximized;
+            btnMaximize.MouseEnter += (s, e) => btnMaximize.BackColor = Color.FromArgb(60, 60, 60);
+            btnMaximize.MouseLeave += (s, e) => btnMaximize.BackColor = Color.Transparent;
+
+            pnlHeader.MouseDown += (s, e) => { ReleaseCapture(); SendMessage(this.Handle, 0x112, 0xf012, 0); };
+
+            this.Load += (s, e) => LoadData(_repo.GetAll());
 
             if (dgvTracks != null)
             {
-                dgvTracks.Resize += (s, e) => _customScrollbar?.UpdateScroll();
-                dgvTracks.SelectionChanged += (s, e) => _customScrollbar?.UpdateScroll();
+                dgvTracks.ColumnHeaderMouseClick += (s, e) => {
+                    string colName = dgvTracks.Columns[e.ColumnIndex].DataPropertyName;
+                    if (string.IsNullOrEmpty(colName)) return;
+                    _sortAscending = (_currentSortColumn == colName) ? !_sortAscending : true;
+                    _currentSortColumn = colName;
 
-                // Динамическая нумерация строк
-                dgvTracks.CellFormatting += (s, e) =>
-                {
-                    if (dgvTracks.Columns[e.ColumnIndex].Name == "TrackNum")
-                    {
-                        e.Value = (e.RowIndex + 1).ToString(); // Всегда 1, 2, 3...
-                    }
+                    var sorted = _sortAscending
+                        ? _currentViewList.OrderBy(t => t.GetType().GetProperty(colName == "DurationFormatted" ? "Duration" : colName).GetValue(t, null)).ToList()
+                        : _currentViewList.OrderByDescending(t => t.GetType().GetProperty(colName == "DurationFormatted" ? "Duration" : colName).GetValue(t, null)).ToList();
+
+                    LoadData(sorted, false);
                 };
 
-                dgvTracks.ColumnHeaderMouseClick += (s, e) =>
-                {
-                    string colName = dgvTracks.Columns[e.ColumnIndex].DataPropertyName;
-                    if (string.IsNullOrEmpty(colName)) return; // Игнорируем клик по колонке с номерами
+                // ФОРМАТИРОВАНИЕ НУМЕРАЦИИ И ЗВЕЗДОЧКИ
+                dgvTracks.CellFormatting += (s, e) => {
+                    if (dgvTracks.Columns[e.ColumnIndex].Name == "TrackNum")
+                    {
+                        Track rowTrack = (Track)dgvTracks.Rows[e.RowIndex].DataBoundItem;
+                        string prefix = _favorites.Contains(rowTrack) ? "★ " : "  ";
+                        e.Value = prefix + (e.RowIndex + 1).ToString("D2");
 
-                    if (_currentSortColumn == colName) _sortAscending = !_sortAscending;
-                    else { _currentSortColumn = colName; _sortAscending = true; }
-
-                    LoadData(_repo.Sort(colName, _sortAscending));
-                    _customScrollbar?.UpdateScroll();
+                        if (_favorites.Contains(rowTrack))
+                            e.CellStyle.ForeColor = Color.FromArgb(30, 215, 96); // Подсвечиваем номер зеленым
+                        else
+                            e.CellStyle.ForeColor = Color.Gray;
+                    }
                 };
             }
 
-            this.MouseWheel += (s, e) =>
-            {
+            this.MouseWheel += (s, e) => {
                 if (dgvTracks == null || dgvTracks.RowCount == 0) return;
-
-                int scrollStep = 3;
-                int currentIndex = dgvTracks.FirstDisplayedScrollingRowIndex;
-
-                if (e.Delta > 0)
-                    dgvTracks.FirstDisplayedScrollingRowIndex = Math.Max(0, currentIndex - scrollStep);
-                else if (e.Delta < 0)
-                    dgvTracks.FirstDisplayedScrollingRowIndex = Math.Min(dgvTracks.RowCount - 1, currentIndex + scrollStep);
-
+                int cur = dgvTracks.FirstDisplayedScrollingRowIndex;
+                if (e.Delta > 0) dgvTracks.FirstDisplayedScrollingRowIndex = Math.Max(0, cur - 3);
+                else if (cur >= 0) dgvTracks.FirstDisplayedScrollingRowIndex = Math.Min(dgvTracks.RowCount - 1, cur + 3);
                 _customScrollbar?.UpdateScroll();
             };
         }
 
-        /// <summary>
-        /// Выполняет привязку данных к таблице, настраивает столбцы и добавляет индикаторы сортировки (стрелки).
-        /// </summary>
-        /// <param name="dataSource">Коллекция треков для отображения.</param>
-        private void LoadData(object dataSource)
+        private void LoadData(List<Track> data, bool resetSort = true)
         {
             if (dgvTracks == null) return;
 
-            // Назначение источника данных
-            dgvTracks.DataSource = dataSource;
+            _currentViewList = data;
+            dgvTracks.DataSource = null;
+            dgvTracks.DataSource = _currentViewList;
 
-            // 1. Инициализация и настройка столбца нумерации (визуальный индекс)
             if (!dgvTracks.Columns.Contains("TrackNum"))
             {
-                var numCol = new DataGridViewTextBoxColumn
-                {
-                    Name = "TrackNum",
-                    HeaderText = "",
-                    ReadOnly = true,
-                    FillWeight = 5 // Минимальная ширина для порядкового номера
-                };
-                numCol.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-                numCol.DefaultCellStyle.ForeColor = Color.Gray;
+                var numCol = new DataGridViewTextBoxColumn { Name = "TrackNum", HeaderText = "", Width = 50, MinimumWidth = 50 };
+                numCol.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
                 dgvTracks.Columns.Insert(0, numCol);
             }
 
-            // 2. Скрытие технических и служебных столбцов (не предназначенных для пользователя)
-            // Скрываем Id, так как он используется только для внутренней логики сортировки
             if (dgvTracks.Columns["Id"] != null) dgvTracks.Columns["Id"].Visible = false;
-            // Скрываем длительность в секундах, заменяя её форматированной строкой
             if (dgvTracks.Columns["Duration"] != null) dgvTracks.Columns["Duration"].Visible = false;
 
-            // 3. Локализация интерфейса: установка кириллических заголовков столбцов
-            var headers = new System.Collections.Generic.Dictionary<string, string>
-            {
-                { "Title", "НАЗВАНИЕ" },
-                { "Artist", "ИСПОЛНИТЕЛЬ" },
-                { "Genre", "ЖАНР" },
-                { "Year", "ГОД" },
-                { "Rating", "РЕЙТИНГ" },
-                { "DurationFormatted", "ДЛИТЕЛЬНОСТЬ" }
+            var headers = new Dictionary<string, string> {
+                {"Title", "НАЗВАНИЕ"}, {"Artist", "ИСПОЛНИТЕЛЬ"}, {"Genre", "ЖАНР"},
+                {"Year", "ГОД"}, {"Rating", "РЕЙТИНГ"}, {"DurationFormatted", "ДЛИТЕЛЬНОСТЬ"}
             };
 
-            foreach (var header in headers)
+            foreach (var h in headers)
             {
-                if (dgvTracks.Columns[header.Key] != null)
+                if (dgvTracks.Columns[h.Key] != null)
                 {
-                    string finalHeader = header.Value;
-
-                    // Индикация активной сортировки посредством добавления глифов ▲ / ▼
-                    if (header.Key == _currentSortColumn)
-                    {
-                        finalHeader += _sortAscending ? "  ▲" : "  ▼";
-                        dgvTracks.Columns[header.Key].HeaderCell.Style.ForeColor = Color.White;
-                    }
-                    else
-                    {
-                        dgvTracks.Columns[header.Key].HeaderCell.Style.ForeColor = Color.Gray;
-                    }
-
-                    dgvTracks.Columns[header.Key].HeaderText = finalHeader;
+                    string text = h.Value;
+                    if (h.Key == _currentSortColumn) text += _sortAscending ? "  ▲" : "  ▼";
+                    dgvTracks.Columns[h.Key].HeaderText = text;
+                    dgvTracks.Columns[h.Key].HeaderCell.Style.ForeColor = (h.Key == _currentSortColumn) ? Color.White : Color.Gray;
                 }
             }
-
-            // 4. Оптимизация распределения экранного пространства (FillWeight)
-            if (dgvTracks.Columns["Title"] != null) dgvTracks.Columns["Title"].FillWeight = 30;
-            if (dgvTracks.Columns["Artist"] != null) dgvTracks.Columns["Artist"].FillWeight = 25;
-            if (dgvTracks.Columns["Genre"] != null) dgvTracks.Columns["Genre"].FillWeight = 15;
-            if (dgvTracks.Columns["Year"] != null) dgvTracks.Columns["Year"].FillWeight = 10;
-            if (dgvTracks.Columns["Rating"] != null) dgvTracks.Columns["Rating"].FillWeight = 10;
-            if (dgvTracks.Columns["DurationFormatted"] != null) dgvTracks.Columns["DurationFormatted"].FillWeight = 10;
-
-            // Сброс выделения для предотвращения визуального акцента на первой строке при загрузке
             dgvTracks.ClearSelection();
+            _customScrollbar?.UpdateScroll();
+        }
+
+        private void CreateSidebarButton(string text, int yPos, Action onClick, bool isBottom = false)
+        {
+            Button btn = new Button { Text = "   " + text, ForeColor = Color.Gray, BackColor = Color.Black, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 10, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft, Width = pnlSidebar.Width, Height = 45, Location = new Point(0, yPos), Cursor = Cursors.Hand };
+            if (isBottom) btn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btn.FlatAppearance.BorderSize = 0;
+            btn.MouseEnter += (s, e) => btn.ForeColor = Color.White;
+            btn.MouseLeave += (s, e) => btn.ForeColor = Color.Gray;
+            btn.Click += (s, e) => onClick();
+            pnlSidebar.Controls.Add(btn);
+        }
+
+        private void ShowHelpDialog()
+        {
+            Form f = new Form { Size = new Size(550, 450), StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.None, BackColor = Color.FromArgb(25, 25, 25) };
+            Label t = new Label { Text = "РУКОВОДСТВО TUNEFLOW", Dock = DockStyle.Top, Height = 60, ForeColor = Color.FromArgb(30, 215, 96), Font = new Font("Segoe UI", 14, FontStyle.Bold), TextAlign = ContentAlignment.MiddleCenter };
+
+            string helpText = "ДОБРО ПОЖАЛОВАТЬ В СИСТЕМУ TUNEFLOW!\n\n" +
+                              "1. НАВИГАЦИЯ: Используйте левую панель для переключения между общим списком и вашим плейлистом.\n\n" +
+                              "2. ПОИСК: Введите текст в верхнее поле. Поиск работает динамически по текущему списку.\n\n" +
+                              "3. УПРАВЛЕНИЕ: Нажмите ПРАВОЙ КНОПКОЙ мыши на трек, чтобы добавить его в избранное или найти похожие композиции.\n\n" +
+                              "4. РЕКОМЕНДАЦИИ: Алгоритм подберет 10 лучших треков того же жанра на основе рейтинга и года выпуска.\n\n" +
+                              "5. ИЗБРАННОЕ: Треки из вашего плейлиста отмечены символом ★ в основной таблице.\n\n" +
+                              "6. СОРТИРОВКА: Кликните по заголовку любого столбца.";
+
+            Label i = new Label { Text = helpText, ForeColor = Color.White, Font = new Font("Segoe UI", 10), Dock = DockStyle.Fill, Padding = new Padding(25), TextAlign = ContentAlignment.TopLeft };
+            Button b = new Button { Text = "ПОНЯТНО", Dock = DockStyle.Bottom, Height = 55, FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.FromArgb(40, 40, 40) };
+            b.Click += (s, e) => f.Close();
+            f.Controls.Add(i); f.Controls.Add(t); f.Controls.Add(b); f.ShowDialog();
+        }
+
+        private void ShowAboutDialog()
+        {
+            Form f = new Form { Size = new Size(450, 320), StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.None, BackColor = Color.FromArgb(20, 20, 20) };
+            Label l1 = new Label { Text = "TUNEFLOW", Dock = DockStyle.Top, Height = 90, ForeColor = Color.FromArgb(30, 215, 96), Font = new Font("Segoe UI", 26, FontStyle.Bold), TextAlign = ContentAlignment.MiddleCenter };
+
+            string about = "ПРОГРАММНОЕ ОБЕСПЕЧЕНИЕ TUNEFLOW\n" +
+                           "Версия: 1.0.8 (Stable Build)\n\n" +
+                           "Разработано в рамках курса ООП.\n" +
+                           "Технологии: .NET 8.0, WinForms, LINQ.\n\n" +
+                           "© 2025 Академический проект.\nВсе права защищены.";
+
+            Label l2 = new Label { Text = about, ForeColor = Color.DarkGray, Font = new Font("Segoe UI", 10), Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter };
+            Button b = new Button { Text = "ЗАКРЫТЬ", Dock = DockStyle.Bottom, Height = 55, FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Color.FromArgb(30, 30, 30) };
+            b.Click += (s, e) => f.Close();
+            f.Controls.Add(l2); f.Controls.Add(l1); f.Controls.Add(b); f.ShowDialog();
+        }
+
+        private void StyleWindowBtn(Button btn, string text)
+        {
+            btn.Text = text; btn.FlatStyle = FlatStyle.Flat; btn.FlatAppearance.BorderSize = 0; btn.ForeColor = Color.White; btn.Cursor = Cursors.Hand;
         }
     }
 }

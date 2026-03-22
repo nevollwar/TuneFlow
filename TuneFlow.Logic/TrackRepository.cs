@@ -77,5 +77,47 @@ namespace TuneFlow.Logic
             }
             return query.ToList();
         }
+
+        /// <summary>
+        /// Рассчитывает коэффициент схожести между двумя треками.
+        /// Чем выше значение, тем более похожими считаются треки.
+        /// </summary>
+        /// <param name="baseTrack">Эталонный трек.</param>
+        /// <param name="targetTrack">Трек для сравнения.</param>
+        /// <returns>Значение от 0 до 100.</returns>
+        public double CalculateSimilarity(Track baseTrack, Track targetTrack)
+        {
+            if (baseTrack.Id == targetTrack.Id) return 0;
+            
+            double score = 0;
+
+            // 1. Сходство по жанру (самый важный критерий)
+            if (baseTrack.Genre == targetTrack.Genre) score += 70;
+
+            // 2. Сходство по времени выпуска (чем ближе года, тем выше балл)
+            int yearDiff = Math.Abs(baseTrack.Year - targetTrack.Year);
+            if (yearDiff <= 2) score += 20;
+            else if (yearDiff <= 5) score += 10;
+            else if (yearDiff <= 10) score += 5;
+
+            // 3. Бонус за высокий рейтинг
+            score += (targetTrack.Rating * 2);
+
+            return Math.Min(score, 100);
+        }
+
+        /// <summary>
+        /// Возвращает список рекомендаций на основе выбранного трека.
+        /// Алгоритм: тот же жанр + высокий рейтинг.
+        /// </summary>
+        public List<Track> GetRecommendations(Track selectedTrack)
+        {
+            return _tracks
+                .Where(t => t.Id != selectedTrack.Id && t.Genre == selectedTrack.Genre)
+                .OrderByDescending(t => t.Rating) // Сначала лучшие по рейтингу
+                .ThenByDescending(t => Math.Abs(t.Year - selectedTrack.Year)) // Затем ближе по году
+                .Take(10) // Топ-10 рекомендаций
+                .ToList();
+        }
     }
 }
