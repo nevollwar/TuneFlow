@@ -106,7 +106,7 @@ namespace TuneFlow.UI
             CreateDynamicUI();
             BindControls();
 
-            // КРИТИЧЕСКИЙ ФИКС: Подписка на изменение размера для синхронизации иконки кнопки
+            // Подписка на изменение размера для синхронизации иконки кнопки
             this.Resize += (s, e) => {
                 if (btnMaximize != null)
                     btnMaximize.Text = (this.WindowState == FormWindowState.Maximized) ? "❐" : "▢";
@@ -906,6 +906,7 @@ namespace TuneFlow.UI
                 "Технологии: .NET 8.0, C#, WinForms\n" +
                 "База данных: 1000 нормализованных записей\n" +
                 "Алгоритм: Multi-Weight Recommendation Engine\n\n" +
+                "Лицензия: Open Source (MIT License)\n\n" +
                 "Разработано в рамках курса 'Алгоритмизация и программирование'\n" +
                 "© 2026 TuneFlow Project. Все права защищены.";
 

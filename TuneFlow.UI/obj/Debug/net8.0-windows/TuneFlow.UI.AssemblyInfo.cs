@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TuneFlow.UI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2daf5bc2732331682df1d552a86be391e57fdf35")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+aa0a7f40836fbf42a1433e8fcdcdb33a7ad98cb5")]
 [assembly: System.Reflection.AssemblyProductAttribute("TuneFlow.UI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TuneFlow.UI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
