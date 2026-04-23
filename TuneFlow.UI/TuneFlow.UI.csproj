@@ -8,4 +8,8 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TuneFlow.Logic\TuneFlow.Logic.csproj" />
+  </ItemGroup>
+
 </Project>

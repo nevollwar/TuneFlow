@@ -15,14 +15,14 @@ namespace TuneFlow.Logic.Algorithms
         /// Ключ — строковый идентификатор узла (например, "u1" для пользователя или "t5" для трека).
         /// Значение — список идентификаторов смежных узлов.
         /// </summary>
-        private readonly Dictionary<string, List<string>> _adjacencyList;
+        private readonly Dictionary<string, List<string>> adjacencyList;
 
         /// <summary>
         /// Инициализирует новый экземпляр класса <see cref="GraphManager"/>.
         /// </summary>
         public GraphManager()
         {
-            _adjacencyList = new Dictionary<string, List<string>>();
+            adjacencyList = new Dictionary<string, List<string>>();
         }
 
         /// <summary>
@@ -37,15 +37,15 @@ namespace TuneFlow.Logic.Algorithms
             string trackNode = "t" + trackId;
 
             // Добавление узлов в список смежности, если они отсутствуют
-            if (!_adjacencyList.ContainsKey(userNode)) _adjacencyList[userNode] = new List<string>();
-            if (!_adjacencyList.ContainsKey(trackNode)) _adjacencyList[trackNode] = new List<string>();
+            if (!adjacencyList.ContainsKey(userNode)) adjacencyList[userNode] = new List<string>();
+            if (!adjacencyList.ContainsKey(trackNode)) adjacencyList[trackNode] = new List<string>();
 
             // Создание двусторонней связи (неориентированный граф)
-            if (!_adjacencyList[userNode].Contains(trackNode))
-                _adjacencyList[userNode].Add(trackNode);
+            if (!adjacencyList[userNode].Contains(trackNode))
+                adjacencyList[userNode].Add(trackNode);
 
-            if (!_adjacencyList[trackNode].Contains(userNode))
-                _adjacencyList[trackNode].Add(userNode);
+            if (!adjacencyList[trackNode].Contains(userNode))
+                adjacencyList[trackNode].Add(userNode);
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace TuneFlow.Logic.Algorithms
             string startNode = "u" + startUserId;
             var recommendedTracks = new Dictionary<int, int>(); // TrackId -> Вес (частота встречи)
 
-            if (!_adjacencyList.ContainsKey(startNode))
+            if (!adjacencyList.ContainsKey(startNode))
                 return new List<int>();
 
             // Очередь для BFS: хранит идентификатор узла и текущую глубину
@@ -78,9 +78,9 @@ namespace TuneFlow.Logic.Algorithms
                 // Остановка при достижении заданной глубины
                 if (currentDepth >= maxDepth) continue;
 
-                if (_adjacencyList.ContainsKey(currentNode))
+                if (adjacencyList.ContainsKey(currentNode))
                 {
-                    foreach (var neighbor in _adjacencyList[currentNode])
+                    foreach (var neighbor in adjacencyList[currentNode])
                     {
                         if (!visited.Contains(neighbor))
                         {

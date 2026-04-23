@@ -1,12 +1,238 @@
 ﻿<Window x:Class="TuneFlow.UI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TuneFlow.UI"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="TuneFlow Pro — Music Management" 
+        Height="850" Width="1350" 
+        Background="#000000" WindowStartupLocation="CenterScreen"
+        Foreground="#FFFFFF">
 
+    <Window.Resources>
+        <!-- Системные конвертеры -->
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <local:PlaylistColorConverter x:Key="PlaylistConverter"/>
+
+        <!-- СТИЛЬ БОКОВЫХ КНОПОК -->
+        <Style x:Key="SideMenuBtn" TargetType="RadioButton">
+            <Setter Property="Height" Value="60"/>
+            <Setter Property="Foreground" Value="#B3B3B3"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bdr" Background="Transparent" Padding="30,0" BorderThickness="5,0,0,0" BorderBrush="Transparent">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter TargetName="Bdr" Property="BorderBrush" Value="#1DB954"/>
+                                <!-- Зеленый Spotify -->
+                                <Setter TargetName="Bdr" Property="Background" Value="#181818"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ОБЩИЙ СТИЛЬ ТАБЛИЦ (DataGrid) -->
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="RowBackground" Value="Transparent"/>
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="ColumnHeaderStyle">
+                <Setter.Value>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Foreground" Value="#B3B3B3"/>
+                        <Setter Property="Padding" Value="10,15"/>
+                        <Setter Property="FontWeight" Value="Bold"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        <Setter Property="BorderBrush" Value="#282828"/>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- СТИЛЬ СТРОКИ ТАБЛИЦЫ С ПОДСВЕТКОЙ ПЛЕЙЛИСТА -->
+        <Style x:Key="TrackRowStyle" TargetType="DataGridRow">
+            <Setter Property="Height" Value="52"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background">
+                <Setter.Value>
+                    <MultiBinding Converter="{StaticResource PlaylistConverter}">
+                        <Binding Path="Id"/>
+                        <Binding RelativeSource="{RelativeSource AncestorType=Window}" Path="CurrentLikedIds"/>
+                    </MultiBinding>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2A2A2A"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- СТИЛЬ КРУГЛЫХ КНОПОК -->
+        <Style x:Key="IconBtn" TargetType="Button">
+            <Setter Property="Width" Value="38"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="19">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280"/>
+            <!-- Sidebar -->
+            <ColumnDefinition Width="*"/>
+            <!-- Main area -->
+        </Grid.ColumnDefinitions>
+
+        <!-- SIDEBAR (БОКОВАЯ ПАНЕЛЬ) -->
+        <Border Grid.Column="0" Background="#000000" BorderBrush="#282828" BorderThickness="0,0,1,0">
+            <StackPanel Margin="0,40,0,0">
+                <TextBlock Text="TUNEFLOW" Foreground="#1DB954" FontSize="32" FontWeight="Black" Margin="35,0,0,50"/>
+
+                <RadioButton x:Name="TabLib" Content="🏠 Библиотека" IsChecked="True" Style="{StaticResource SideMenuBtn}" Checked="Tab_Changed"/>
+                <RadioButton x:Name="TabPlay" Content="❤ Мой Плейлист" Style="{StaticResource SideMenuBtn}" Checked="Tab_Changed"/>
+                <RadioButton x:Name="TabStats" Content="📊 Аналитика" Style="{StaticResource SideMenuBtn}" Checked="Tab_Changed"/>
+                <RadioButton x:Name="TabInfo" Content="🛈 Справка" Style="{StaticResource SideMenuBtn}" Checked="Tab_Changed"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ОСНОВНАЯ ОБЛАСТЬ -->
+        <Grid Grid.Column="1" Margin="40">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <!-- Поиск -->
+                <RowDefinition Height="*"/>
+                <!-- Контент -->
+            </Grid.RowDefinitions>
+
+            <!-- ВЕРХНЯЯ ПАНЕЛЬ (ПОИСК) -->
+            <Grid Grid.Row="0" Margin="0,0,0,40">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Border Background="#242424" CornerRadius="22" Padding="20,0">
+                    <TextBox x:Name="SearchTitleBox" Background="Transparent" BorderThickness="0" Foreground="White" FontSize="16" VerticalContentAlignment="Center" Height="45" CaretBrush="#1DB954"/>
+                </Border>
+                <Button Grid.Column="1" Content="ПОИСК" Style="{StaticResource IconBtn}" Width="120" Height="45" Background="#1DB954" Margin="20,0,0,0" Click="Search_Click" FontWeight="Bold" Foreground="White"/>
+            </Grid>
+
+            <!-- КОНТЕНТНЫЙ БЛОК (ПЕРЕКЛЮЧЕНИЕ ГРИДАМИ) -->
+            <Grid Grid.Row="1">
+
+                <!-- 1. БИБЛИОТЕКА -->
+                <Grid Visibility="{Binding IsChecked, ElementName=TabLib, Converter={StaticResource BoolToVis}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                        <ComboBox x:Name="SortByCombo" Width="180" Height="35" SelectionChanged="Sort_Changed" VerticalContentAlignment="Center" Background="#282828" Foreground="Black"/>
+                        <CheckBox x:Name="ReverseSortCheck" Content="Реверс" Foreground="#B3B3B3" VerticalAlignment="Center" Margin="30,0" Click="Sort_Changed"/>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1" x:Name="TracksDataGrid" AutoGenerateColumns="False" RowStyle="{StaticResource TrackRowStyle}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ИСПОЛНИТЕЛЬ" Binding="{Binding Artist}" Width="*"/>
+                            <DataGridTextColumn Header="НАЗВАНИЕ" Binding="{Binding Title}" Width="1.5*"/>
+                            <DataGridTextColumn Header="ЖАНР" Binding="{Binding Genre}" Width="110"/>
+                            <DataGridTextColumn Header="ГОД" Binding="{Binding Year}" Width="65"/>
+                            <DataGridTextColumn Header="МИН." Binding="{Binding Duration}" Width="65"/>
+                            <DataGridTextColumn Header="★" Binding="{Binding Rating}" Width="50"/>
+                            <DataGridTemplateColumn Header="ОПЦИИ" Width="110">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="❤" Background="#FF2D55" Style="{StaticResource IconBtn}" Margin="2" Click="LikeTrack_Click" Tag="{Binding Id}" Foreground="White"/>
+                                            <Button Content="🔍" Background="#5856D6" Style="{StaticResource IconBtn}" Margin="2" Click="FindSimilar_Click" Tag="{Binding Id}" Foreground="White"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+
+                <!-- 2. МОЙ ПЛЕЙЛИСТ -->
+                <Grid Visibility="{Binding IsChecked, ElementName=TabPlay, Converter={StaticResource BoolToVis}}">
+                    <DataGrid x:Name="PlaylistDataGrid" AutoGenerateColumns="False" RowStyle="{StaticResource TrackRowStyle}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="АРТИСТ" Binding="{Binding Artist}" Width="*"/>
+                            <DataGridTextColumn Header="ТРЕК" Binding="{Binding Title}" Width="1.5*"/>
+                            <DataGridTextColumn Header="ЖАНР" Binding="{Binding Genre}" Width="120"/>
+                            <DataGridTextColumn Header="ГОД" Binding="{Binding Year}" Width="80"/>
+                            <DataGridTemplateColumn Header="УДАЛИТЬ" Width="100">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="🗑" Background="#444444" Style="{StaticResource IconBtn}" Click="RemoveFromPlaylist_Click" Tag="{Binding Id}" Foreground="White"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+
+                <!-- 3. АНАЛИТИКА -->
+                <Grid Visibility="{Binding IsChecked, ElementName=TabStats, Converter={StaticResource BoolToVis}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="2*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Background="#121212" CornerRadius="20" Padding="30">
+                        <Canvas x:Name="MainCanvas"/>
+                    </Border>
+                    <TextBlock Grid.Row="1" x:Name="StatsText" Foreground="#B3B3B3" FontSize="20" Margin="10,30,0,0" TextWrapping="Wrap" LineHeight="32"/>
+                </Grid>
+
+                <!-- 4. СПРАВКА -->
+                <Grid Visibility="{Binding IsChecked, ElementName=TabInfo, Converter={StaticResource BoolToVis}}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <Border Background="#181818" CornerRadius="20" Padding="40" Margin="0,0,20,0">
+                            <StackPanel>
+                                <TextBlock Text="ДОКУМЕНТАЦИЯ СИСТЕМЫ" Foreground="White" FontSize="30" FontWeight="Bold" Margin="0,0,0,30"/>
+                                <TextBlock Text="Алгоритмы и функции:" Foreground="#1DB954" FontSize="20" FontWeight="Bold" Margin="0,0,0,15"/>
+                                <TextBlock TextWrapping="Wrap" Foreground="#B3B3B3" FontSize="16" LineHeight="30">
+                                    • <Bold Foreground="White">Рекомендации:</Bold> Кнопка 🔍 запускает расчет сходства треков по Жанру и Году. <LineBreak/>
+                                    • <Bold Foreground="White">Плейлист:</Bold> Добавляйте треки кнопкой ❤. Добавленные треки подсвечиваются мягким цветом в общей базе. <LineBreak/>
+                                    • <Bold Foreground="White">Удаление:</Bold> Во вкладке 'Мой Плейлист' вы можете удалить трек с помощью иконки корзины 🗑. <LineBreak/>
+                                    • <Bold Foreground="White">Аналитика:</Bold> Система строит графики распределения базы по годам выпуска.
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </ScrollViewer>
+                </Grid>
+
+            </Grid>
+        </Grid>
+
+        <!-- СТАТУС БАР -->
+        <StatusBar Grid.Column="1" VerticalAlignment="Bottom" Background="Transparent" Margin="40,0,40,15">
+            <TextBlock x:Name="FooterStatus" Foreground="#535353" FontSize="12"/>
+        </StatusBar>
     </Grid>
 </Window>

@@ -12,8 +12,8 @@ namespace TuneFlow.Logic.Algorithms
     /// </summary>
     public class Recommender
     {
-        private readonly DataRepository _repository;
-        private readonly GraphManager _graphManager;
+        private readonly DataRepository repository;
+        private readonly GraphManager graphManager;
 
         /// <summary>
         /// Инициализирует экземпляр класса <see cref="Recommender"/>.
@@ -22,8 +22,8 @@ namespace TuneFlow.Logic.Algorithms
         /// <param name="graphManager">Менеджер графа для выполнения BFS-поиска.</param>
         public Recommender(DataRepository repository, GraphManager graphManager)
         {
-            _repository = repository;
-            _graphManager = graphManager;
+            repository = repository;
+            graphManager = graphManager;
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace TuneFlow.Logic.Algorithms
             var candidates = new List<Track>();
 
             // Фильтрация треков по жанру вручную (без LINQ)
-            foreach (var track in _repository.AllTracks)
+            foreach (var track in repository.AllTracks)
             {
                 if (track.Genre.Equals(genre, StringComparison.OrdinalIgnoreCase))
                 {
@@ -75,7 +75,7 @@ namespace TuneFlow.Logic.Algorithms
             var userSimilarities = new List<(User user, double score)>();
 
             // 1. Поиск похожих пользователей на основе коэффициента Жаккара
-            foreach (var otherUser in _repository.AllUsers)
+            foreach (var otherUser in repository.AllUsers)
             {
                 if (otherUser.Id == targetUser.Id) continue;
 
@@ -111,7 +111,7 @@ namespace TuneFlow.Logic.Algorithms
             var result = new List<Track>();
             foreach (var entry in recommendedIds)
             {
-                var track = _repository.GetTrackById(entry.Key);
+                var track = repository.GetTrackById(entry.Key);
                 if (track != null) result.Add(track);
             }
 
@@ -126,12 +126,12 @@ namespace TuneFlow.Logic.Algorithms
         public List<Track> GetGraphRecommendations(int userId)
         {
             // Вызов метода BFS из GraphManager
-            List<int> trackIds = _graphManager.GetRecommendationsBFS(userId);
+            List<int> trackIds = graphManager.GetRecommendationsBFS(userId);
 
             var result = new List<Track>();
             foreach (int id in trackIds)
             {
-                var track = _repository.GetTrackById(id);
+                var track = repository.GetTrackById(id);
                 if (track != null) result.Add(track);
             }
             return result;
