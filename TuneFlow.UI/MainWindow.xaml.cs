@@ -20,6 +20,7 @@ namespace TuneFlow.UI
         private readonly DataRepository repository;
         private readonly StatsService statsService;
         private readonly GraphManager graphManager;
+        private readonly Recommender recommender;
         private User currentUser;
 
         /// <summary>
@@ -40,6 +41,7 @@ namespace TuneFlow.UI
             foreach (var user in repository.AllUsers)
                 foreach (int tid in user.LikedTrackIds)
                     graphManager.AddRelation(user.Id, tid);
+            recommender = new Recommender(repository, graphManager);
 
             SortByCombo.Items.Add("По названию");
             SortByCombo.Items.Add("По рейтингу");
@@ -54,22 +56,38 @@ namespace TuneFlow.UI
         /// </summary>
         private void Tab_Changed(object sender, RoutedEventArgs e)
         {
-            if (TabPlay != null && TabPlay.IsChecked == true)
-            {
-                SearchTitleBox.Text = ""; // Сброс поиска при переходе в плейлист
-                RefreshInterface();
-            }
+            if (SearchTitleBox != null) SearchTitleBox.Text = "";
 
             if (TabStats != null && TabStats.IsChecked == true)
             {
-                // Принудительная отрисовка графика через Dispatcher
                 Dispatcher.BeginInvoke(new Action(() => UpdateStats_Display(this, EventArgs.Empty)),
                     System.Windows.Threading.DispatcherPriority.Render);
+            }
+
+            if (TabRecs != null && TabRecs.IsChecked == true)
+            {
+                if (BfsRecsGrid == null || CollabRecsGrid == null) return;
+
+                // 1. Алгоритм BFS
+                var bfsIds = graphManager.GetRecommendationsBFS(currentUser.Id);
+                BfsRecsGrid.ItemsSource = bfsIds.Select(id => repository.GetTrackById(id)).Take(15).ToList();
+
+                // 2. Коллаборативная фильтрация
+                CollabRecsGrid.ItemsSource = recommender.GetCollaborativeRecommendations(currentUser).Take(15).ToList();
+
+                FooterStatus.Text = "Рекомендации сформированы на основе алгоритмов BFS и коэффициента Жаккара.";
+            }
+
+            if (TabLib != null && TabLib.IsChecked == true || TabPlay != null && TabPlay.IsChecked == true)
+            {
+                RefreshInterface();
             }
         }
 
         private void RefreshInterface()
         {
+            if (TracksDataGrid == null || PlaylistDataGrid == null) return;
+
             // Обновление основной таблицы (Binding срабатывает заново)
             TracksDataGrid.ItemsSource = null;
             TracksDataGrid.ItemsSource = repository.AllTracks;

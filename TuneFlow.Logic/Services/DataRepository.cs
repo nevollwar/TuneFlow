@@ -54,17 +54,22 @@ namespace TuneFlow.Logic.Services
             users.Add(mainUser);
 
             // Демо-пользователи для работы BFS
-            string[] names = { "Мария", "Дмитрий", "Елена", "Иван" };
-            for (int i = 0; i < names.Length; i++)
+            for (int i = 2; i <= 51; i++)
             {
-                var otherUser = new User(i + 2, names[i]);
-                Random r = new Random(i);
-                for (int j = 0; j < 15; j++) otherUser.LikeTrack(r.Next(1, 1001));
+                var otherUser = new User(i, $"Пользователь {i}");
+                Random r = new Random(i * 1337); // Уникальный сид для каждого пользователя
+
+                // Каждый пользователь лайкает 100 случайных треков из 1000 (10% базы)
+                for (int j = 0; j < 100; j++)
+                {
+                    int randomTrackId = r.Next(1, 1001);
+                    otherUser.LikeTrack(randomTrackId);
+                }
                 users.Add(otherUser);
             }
         }
 
-        // ТОТ САМЫЙ МЕТОД, КОТОРОГО НЕ ХВАТАЛО
+       
         public void SaveUserData(User user)
         {
             string json = JsonSerializer.Serialize(user.LikedTrackIds);
@@ -95,15 +100,23 @@ namespace TuneFlow.Logic.Services
             File.WriteAllText(DbPath, JsonSerializer.Serialize(tracks));
         }
 
-        public List<Track> SearchTracks(string titlePart, object value, object value1, object value2, object value3)
+        public List<Track> SearchTracks(string? titlePart = null, string? artistPart = null, string? genre = null, int? minYear = null, int? maxYear = null)
         {
             var results = new List<Track>();
             foreach (var track in tracks)
             {
-                if (string.IsNullOrEmpty(titlePart) ||
-                    track.Title.IndexOf(titlePart, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    track.Artist.IndexOf(titlePart, StringComparison.OrdinalIgnoreCase) >= 0)
-                    results.Add(track);
+                bool matches = true;
+
+                if (!string.IsNullOrWhiteSpace(titlePart) &&
+                    track.Title.IndexOf(titlePart, StringComparison.OrdinalIgnoreCase) < 0 &&
+                    track.Artist.IndexOf(titlePart, StringComparison.OrdinalIgnoreCase) < 0)
+                    matches = false;
+
+                if (matches && !string.IsNullOrWhiteSpace(genre) &&
+                    !track.Genre.Equals(genre, StringComparison.OrdinalIgnoreCase))
+                    matches = false;
+
+                if (matches) results.Add(track);
             }
             return results;
         }
